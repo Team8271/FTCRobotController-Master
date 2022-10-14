@@ -95,16 +95,6 @@ public class TonyOmniOpMode extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "FR");
         rightBackDrive = hardwareMap.get(DcMotor.class, "BR");
 
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -161,6 +151,14 @@ public class TonyOmniOpMode extends LinearOpMode {
             rightFrontDrive.setPower(rightFrontPower);
             leftBackDrive.setPower(leftBackPower);
             rightBackDrive.setPower(rightBackPower);
+
+            //update odometry
+            robot.CalculateOdometry();
+
+            if(gamepad1.dpad_up)
+            {
+                robot.DriveOdo(robot.targetPos, 1);
+            }
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());

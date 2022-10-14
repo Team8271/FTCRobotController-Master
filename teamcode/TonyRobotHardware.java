@@ -56,10 +56,10 @@ public class TonyRobotHardware {
     private TonyOmniOpMode myOpMode = null;   // gain access to methods in the calling OpMode.
 
     // Define Motor and Servo objects  (Make them private so they can't be accessed externally)
-    private DcMotor leftFrontDrive   = null;
-    private DcMotor rightFrontDrive  = null;
-    private DcMotor leftBackDrive   = null;
-    private DcMotor rightBackDrive  = null;
+    private DcMotor frontLeft = null;
+    private DcMotor frontRight = null;
+    private DcMotor backLeft = null;
+    private DcMotor backRight = null;
 
     public DcMotor encoderLeft;
     public DcMotor encoderRight;
@@ -72,23 +72,23 @@ public class TonyRobotHardware {
 
     public void init()    {
         // Define and Initialize Motors (note: need to use reference to actual OpMode).
-        leftFrontDrive  = myOpMode.hardwareMap.get(DcMotor.class, "FL");
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft = myOpMode.hardwareMap.get(DcMotor.class, "FL");
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        rightFrontDrive = myOpMode.hardwareMap.get(DcMotor.class, "FR");
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight = myOpMode.hardwareMap.get(DcMotor.class, "FR");
+        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        leftBackDrive  = myOpMode.hardwareMap.get(DcMotor.class, "BL");
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft = myOpMode.hardwareMap.get(DcMotor.class, "BL");
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        rightBackDrive = myOpMode.hardwareMap.get(DcMotor.class, "BR");
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight = myOpMode.hardwareMap.get(DcMotor.class, "BR");
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        encoderLeft  = rightFrontDrive;
-        encoderRight = leftFrontDrive;
-        encoderAux  =  rightBackDrive;
+        encoderLeft  = frontRight;
+        encoderRight = frontLeft;
+        encoderAux  = backRight;
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
         // leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -99,17 +99,17 @@ public class TonyRobotHardware {
 
     public void ResetDriveEncoders()
     {
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     //constants that define the geometry of the robot
@@ -139,8 +139,10 @@ public class TonyRobotHardware {
 
     //XYHVector is a tuple (x, y, h) where h is the heading of the robot
 
-    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(-174));
+    public XyhVector START_POS = new XyhVector(0, 0, Math.toRadians(0));
     public XyhVector pos = new XyhVector(START_POS);
+
+    public XyhVector targetPos = new XyhVector(50, 50, 0);
 
     public void CalculateOdometry()
     {
@@ -153,8 +155,8 @@ public class TonyRobotHardware {
         currentAuxPos = encoderAux.getCurrentPosition();
 
         int dn1 = currentLeftPos - oldLeftPos;
-        int dn2 = currentLeftPos - oldLeftPos;
-        int dn3 = currentLeftPos - oldLeftPos;
+        int dn2 = currentRightPos - oldRightPos;
+        int dn3 = currentAuxPos - oldAuxPos;
 
         //robot has moved and turned a tiny bit in between movements
         double dTheta = cm_per_tick * (dn2-dn1) / L;
@@ -166,6 +168,21 @@ public class TonyRobotHardware {
         pos.x += dX * Math.cos(theta) - dY * Math.sin(theta);
         pos.y += dX * Math.sin(theta) + dY * Math.cos(theta);
         pos.h += dTheta;
+    }
+
+    public void DriveOdo(XyhVector TargetPos, double speed)
+    {
+        double CX = TargetPos.x - pos.x;
+        double CY = TargetPos.y - pos.y;
+        double CTheta = currentAuxPos - oldAuxPos;
+
+        if(pos.x < TargetPos.x)
+        {
+            frontLeft.setPower(speed - CTheta);
+            backLeft.setPower(speed - CTheta);
+            frontRight.setPower(speed + CTheta);
+            backRight.setPower(speed + CTheta);
+        }
     }
 
     /**
@@ -201,8 +218,8 @@ public class TonyRobotHardware {
      */
     public void setDrivePower(double leftWheel, double rightWheel) {
         // Output the values to the motor drives.
-        leftFrontDrive.setPower(leftWheel);
-        rightFrontDrive.setPower(rightWheel);
+        frontLeft.setPower(leftWheel);
+        frontRight.setPower(rightWheel);
     }
 
     /**
